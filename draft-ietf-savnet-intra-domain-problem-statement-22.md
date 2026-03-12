@@ -89,9 +89,9 @@ Source Address Validation (SAV) defends against source address spoofing. Network
 
 * Within the domain (i.e., the autonomous system)
 
-* Between domains (i.e., the autonomous systems)
+* Between domains (i.e., autonomous systems)
 
-Access networks have already deployed SAV mechanisms. These mechanisms typically are deployed on switches and prevent hosts from using the source address of another host on the Internet. Mechanisms include:
+Some access networks have already deployed SAV mechanisms. These mechanisms typically are deployed on switches and prevent hosts from using the source address of another host on the Internet. Mechanisms include:
 
 * Source Address Validation Improvement (SAVI) Solution for DHCP [RFC7513]
 
@@ -132,8 +132,8 @@ In this document, intra-domain SAV refers to SAV at external interfaces that do 
        |     (P1)       |         |     (P2)      |  
        +----------------+         +---------------+ 
                                                     
-  External non-BGP interfaces include Interfaces
-  'X', '*', and '#'.
+  This document focuses on SAV at external non-BGP 
+  interfaces including Interfaces  'X', '*', and '#'.
 ~~~
 {: #intra-domain  title="Deployment locations of intra-domain SAV"}
 
@@ -161,7 +161,7 @@ Although BCP 38 [RFC2827] and BCP 84 [RFC3704] specify several ingress filtering
 
 - Access Control Lists (ACLs) can be used as SAV filters [RFC2827] to check the source address of each packet against a set of permitted or prohibited prefixes. When applied on a router interface, packets that do not match the ACL entries are blocked. Since ACLs are configured and updated manually, timely updates are essential whenever the set of permitted or prohibited prefixes changes.
 
-- Strict uRPF [RFC3704] provides an automated SAV filter by validating the source address of each packet against the router’s local Forwarding Information Base (FIB). A packet is accepted only if (i) the FIB contains a prefix covering the source address, and (ii) the FIB entry’s outgoing interface matches the packet’s incoming interface. Otherwise, the packet is discarded. Strict uRPF is commonly used to block spoofed packets originating from a directly connected host or non-BGP customer network.
+- Strict uRPF [RFC3704] provides an automated SAV filter by validating the source address of each packet against the router’s local Forwarding Information Base (FIB). A packet is accepted only if (i) the FIB contains a prefix covering the source address, and (ii) the FIB entry’s outgoing interface matches the packet’s incoming interface. Otherwise, the packet is discarded. 
 
 - Loose uRPF [RFC3704] also relies on the local FIB for validation, but only checks for the presence of a covering prefix. A packet is accepted if the FIB contains a prefix that covers the source address, regardless of the incoming interface. 
 
@@ -179,9 +179,9 @@ With strict uRPF, it may drop legitimate packets in scenarios such as asymmetric
 
 ## Asymmetric Routing Scenario
 
-Asymmetric routing means a packet traverses from a source to a destination in one path and takes a different path when it returns to the source. Asymmetric routing can occur within an AS due to routing policy, traffic engineering, etc. For example, a non-BGP customer network connected to multiple routers of the AS may need to perform load balancing on incoming traffic, thereby resulting in asymmetric routing.
+Asymmetric routing means a packet traverses from a source to a destination in one path and takes a different path when it returns to the source. Asymmetric routing can occur within an AS due to routing policy, traffic engineering, etc. 
 
-{{multi-home}} illustrates an example of asymmetric routing. The non-BGP customer network owns prefix 2001:db8::/55 [RFC6890] and connects to two routers of the AS, Router 1 and Router 2. Router 1, Router 2, and Router 3 exchange routing information via the intra-domain routing protocol. To achieve load balancing for inbound traffic, the non-BGP customer network expects traffic destined for 2001:db8:0::/56 to enter through Router 1, and traffic destined for 2001:db8:0:100::/56 to enter through Router 2. To this end, Router 1 advertises 2001:db8:0::/56 and Router 2 advertises 2001:db8:0:100::/56 through the intra-domain routing protocol. {{multi-home}} also shows the corresponding FIB entries of Router 1 and Router 2 for the two prefixes.
+For example, a non-BGP customer network connected to multiple routers of the AS may need to perform load balancing on incoming traffic, thereby resulting in asymmetric routing. {{multi-home}} illustrates an example of asymmetric routing. The non-BGP customer network owns prefix 2001:db8::/55 [RFC6890] and connects to two routers of the AS, Router 1 and Router 2. Router 1, Router 2, and Router 3 exchange routing information via the intra-domain routing protocol. To achieve load balancing for inbound traffic, the non-BGP customer network expects traffic destined for 2001:db8:0::/56 to enter through Router 1, and traffic destined for 2001:db8:0:100::/56 to enter through Router 2. To this end, Router 1 advertises 2001:db8:0::/56 and Router 2 advertises 2001:db8:0:100::/56 through the intra-domain routing protocol. {{multi-home}} also shows the corresponding FIB entries of Router 1 and Router 2 for the two prefixes.
 
 ~~~
  +----------------------------------------------------------+
@@ -254,13 +254,12 @@ Another consideration is that uRPF-based mechanisms rely on routing information 
 
 This section outlines five general requirements for technical improvements that should be considered when designing future intra-domain SAV architectures and solutions. These informational requirements can not be used to initiate standards-track protocol changes.
 
-## Accurate Validation
+## Accurate Validation {#sub-require1}
 
-Any new intra-domain SAV mechanism MUST improve the accuracy of existing uRPF-based mechanisms by reducing improper blocks and improper permits. Specifically, it MUST satisfy the following:
+Any new intra-domain SAV mechanism MUST improve the accuracy of source address validation compared to existing uRPF-based mechanisms. In particular, it MUST reduce the occurrence of improper blocks (i.e., blocking legitimate traffic), improper permits (i.e., allowing spoofed traffic), or both. Specifically, it MUST satisfy the following conditions:
 
-- MUST result in fewer improper blocks than strict uRPF, particularly in scenarios involving asymmetric routes or hidden prefixes; and
-- MUST NOT result in more improper permits than strict uRPF; and  
-- MUST result in fewer improper permits than loose uRPF.
+- result in fewer improper blocks than strict uRPF, particularly in scenarios involving asymmetric routes or hidden prefixes;
+- result in fewer improper permits than loose uRPF.
 
 To achieve higher SAV accuracy, additional information beyond the local FIB (e.g., SAV-specific information) may be needed to make validation decisions. By integrating such information, routers may have the ability to account for asymmetric routes and hidden prefixes, resulting in more accurate SAV rules.
 
@@ -270,7 +269,7 @@ Any new intra-domain SAV mechanism MUST be capable of automatically generating a
 
 ## Incremental Deployment Support
 
-Any new intra-domain SAV mechanism MUST support incremental deployment and MUST provide measurable benefits even when only a subset of external non-BGP interfaces has adopted it.
+Any new intra-domain SAV mechanism MUST support incremental deployment and provide measurable benefits even when only a subset of external non-BGP interfaces deploy the mechanism. In other words, it MUST NOT work untill all ex
 
 ## Fast Convergence
 
