@@ -269,7 +269,7 @@ Any new intra-domain SAV mechanism MUST be capable of automatically generating a
 
 ## Incremental Deployment Support
 
-Any new intra-domain SAV mechanism MUST support incremental deployment and provide measurable benefits even when only a subset of external non-BGP interfaces deploy the mechanism. In other words, it MUST NOT work untill all ex
+Any new intra-domain SAV mechanism MUST support incremental deployment and provide measurable benefits even when only a subset of external non-BGP interfaces deploy the mechanism.
 
 ## Fast Convergence
 
