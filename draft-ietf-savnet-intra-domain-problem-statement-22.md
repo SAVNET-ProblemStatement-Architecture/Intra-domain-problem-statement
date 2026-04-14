@@ -82,7 +82,7 @@ informative:
 
 --- abstract
 
-This document provides a gap analysis of the current operational intra-domain SAV mechanisms and identifies requirements for any new intra-domain SAV solutions.
+This document provides a gap analysis of the current operational intra-domain SAV mechanisms and identifies requirements for new intra-domain SAV solutions.
 
 --- middle
 
@@ -106,7 +106,7 @@ Some access networks have already deployed SAV mechanisms. These mechanisms typi
 
 However, access-network SAV mechanisms are not universally deployed [CAIDA-spoofer]. Therefore, intra-domain (i.e., intra-AS) SAV and inter-domain (i.e., inter-AS) SAV are required [RFC5210].
 
-This document provides a gap analysis of the current operational intra-domain SAV mechanisms and identifies requirements for any new intra-domain SAV solutions.
+This document provides a gap analysis of the current operational intra-domain SAV mechanisms and identifies requirements for new intra-domain SAV solutions.
 
 In this document, intra-domain SAV refers to SAV at a domain's external interfaces that do not carry external BGP (eBGP) sessions (i.e., non-BGP external interfaces). SAV at internal interfaces or BGP-facing external interfaces is considered out of scope. For a domain, as illustrated in {{intra-domain}}, a non-BGP external interface may connect to a set of hosts, a non-BGP customer network, or a non-BGP Internet Service Provider (ISP) network. The goal of intra-domain SAV at such interfaces is to prevent traffic using unauthorized source addresses from entering the domain.
 
