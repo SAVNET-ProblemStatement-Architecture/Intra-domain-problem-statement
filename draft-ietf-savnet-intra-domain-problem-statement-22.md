@@ -108,7 +108,7 @@ However, access-network SAV mechanisms are not universally deployed [CAIDA-spoof
 
 This document provides a gap analysis of the current operational intra-domain SAV mechanisms and identifies requirements for new intra-domain SAV solutions.
 
-In this document, intra-domain SAV refers to SAV at a domain's external interfaces that do not carry external BGP (eBGP) sessions (i.e., non-BGP external interfaces). SAV at internal interfaces or BGP-facing external interfaces is considered out of scope. For a domain, as illustrated in {{intra-domain}}, a non-BGP external interface may connect to a set of hosts, a non-BGP customer network, or a non-BGP Internet Service Provider (ISP) network. The goal of intra-domain SAV at such interfaces is to prevent traffic using unauthorized source addresses from entering the domain.
+In this document, a domain refers to a routing domain under a single administrative control (e.g., an AS). Intra-domain SAV refers to SAV at a domain's external interfaces that do not carry external BGP (eBGP) sessions (i.e., non-BGP external interfaces). SAV at internal interfaces or BGP-facing external interfaces is considered out of scope. For a domain, as illustrated in {{intra-domain}}, a non-BGP external interface may connect to a set of hosts, a non-BGP customer network, or a non-BGP Internet Service Provider (ISP) network. The goal of intra-domain SAV at such interfaces is to prevent traffic using unauthorized source addresses from entering the domain.
 
 ~~~
       +-----------------+         +---------------+ 
@@ -154,17 +154,23 @@ Improper Block: The validation results that the packets with legitimate source a
 
 Improper Permit: The validation results that the packets with spoofed source addresses are permitted improperly due to inaccurate SAV rules.
 
+Proper Block: The validation results that packets with spoofed source addresses are blocked by SAV rules.
+
+Proper Permit: The validation results that packets with legitimate source addresses are permitted by SAV rules.
+
 SAV-specific Information: The information specialized for SAV rule generation.
 
 ## Requirements Language
 
 {::boilerplate bcp14-tagged}
 
+The requirements language is used in [sec-requirement] and applies to implementations of SAV conformant to the listed requirements.
+
 # Problem Statement of Current Operational Intra-domain SAV Mechanisms {#sec-mechanisms}
 
 Although BCP 38 [RFC2827] and BCP 84 [RFC3704] specify several ingress filtering methods primarily intended for inter-domain SAV, some of these methods have also been applied to intra-domain SAV in operational practice. This section summarizes the problems of mechanisms currently used to implement intra-domain SAV. These mechanisms have significant limitations in terms of automated updates or accurate validation.
 
-- Access Control Lists (ACLs) can be used as SAV filters [RFC2827] to check the source address of each packet against a set of permitted or prohibited prefixes. When applied on a router interface, each ACL entry (ACE) specifies both matching conditions (e.g., prefixes) and the corresponding action (e.g., permit or deny), and packets are processed accordingly. To ensure correct filtering behavior, changes in SAV state need to be reflected in corresponding ACL rules, which in turn need to be updated in accordance with changes in prefixes or topology; otherwise, packets may be improperly blocked or permitted. In ACL-based ingress filtering [RFC2827] deployments, maintaining consistency between SAV state and ACL rules can introduce operational challenges, as this update process is often performed manually or requires significant operational intervention.
+- Access Control Lists (ACLs) can be used as SAV filters [RFC2827] to check the source address of each packet against a set of permitted or prohibited prefixes. When applied on a router interface, each ACL entry (ACE) specifies both matching conditions (e.g., prefixes) and the corresponding action (e.g., permit or deny), and packets are processed accordingly. To ensure correct filtering behavior, changes in SAV state need to be reflected in corresponding ACL rules, which in turn need to be updated in accordance with changes in prefixes or topology; otherwise, packets may be improperly permitted or blocked. In ACL-based ingress filtering [RFC2827] deployments, maintaining consistency between SAV state and ACL rules can introduce operational challenges, as this update process is often performed manually or requires significant operational intervention.
 
 - Strict uRPF [RFC3704] provides an automated SAV filter by validating the source address of each packet against the router’s local Forwarding Information Base (FIB). A packet is accepted only if (i) the FIB contains a prefix covering the source address, and (ii) the FIB entry’s outgoing interface matches the packet’s incoming interface. Otherwise, the packet is discarded. It may block legitimate traffic in the asymmetric routing or hidden prefix scenarios (see [subsec-ar] and [subsec-hp]). Strict uRPF may mistakenly consider a valid incoming interface as invalid, resulting in legitimate packets being blocked (i.e., an improper block problem).
 
