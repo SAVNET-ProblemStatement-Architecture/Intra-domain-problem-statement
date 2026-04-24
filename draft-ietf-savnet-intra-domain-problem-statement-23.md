@@ -82,7 +82,7 @@ informative:
 
 --- abstract
 
-This document provides a gap analysis of the current operational intra-domain SAV mechanisms and identifies requirements for new intra-domain SAV solutions.
+Source address validation (SAV) is an important means to mitigate IP source address spoofing [RFC2827]. This document analyzes the gaps in current operational mechanisms for intra-domain SAV. It also identifies the properties that new intra-domain SAV mechanisms are expected to provide.
 
 --- middle
 
@@ -96,7 +96,7 @@ Source Address Validation (SAV) defends against source address spoofing. Network
 
 * IP source address validation in the inter-AS Case (neighboring AS) 
 
-Some access networks have already deployed SAV mechanisms. These mechanisms typically are deployed on switches in the access network and prevent hosts from using the source address of another host on the Internet [RFC5210]. Mechanisms include:
+Some access networks have already deployed SAV mechanisms. These mechanisms are typically deployed on switches in the access network and aim to prevent each host connected to them from using the source address of another host on the Internet [RFC5210]. Mechanisms include:
 
 * Source Address Validation Improvement (SAVI) Solution for DHCP [RFC7513]
 
@@ -106,9 +106,7 @@ Some access networks have already deployed SAV mechanisms. These mechanisms typi
 
 However, access-network SAV mechanisms are not universally deployed [CAIDA-spoofer]. Therefore, intra-domain (i.e., intra-AS) SAV and inter-domain (i.e., inter-AS) SAV are required [RFC5210].
 
-This document provides a gap analysis of the current operational intra-domain SAV mechanisms and identifies requirements for new intra-domain SAV solutions.
-
-In this document, a domain refers to a routing domain under a single administrative control (e.g., an AS). Intra-domain SAV refers to SAV at a domain's external interfaces that do not carry external BGP (eBGP) sessions (i.e., non-BGP external interfaces). SAV at internal interfaces or BGP-facing external interfaces is considered out of scope. For a domain, as illustrated in {{intra-domain}}, a non-BGP external interface may connect to a set of hosts, a non-BGP customer network, or a non-BGP Internet Service Provider (ISP) network. The goal of intra-domain SAV at such interfaces is to prevent traffic using unauthorized source addresses from entering the domain.
+In this document, intra-domain SAV refers to SAV at a domain's external interfaces that do not carry external BGP (eBGP) sessions (i.e., non-BGP external interfaces). SAV at internal interfaces between routers within the same domain is outside the scope of this document. SAV at BGP-facing external interfaces is classified as inter-domain SAV. For a domain, as illustrated in {{intra-domain}}, a non-BGP external interface may connect to a set of hosts, a non-BGP customer network, or a non-BGP Internet Service Provider (ISP) network. Intra-domain SAV validates source addresses of data traffic received at such interfaces.
 
 ~~~
       +-----------------+         +---------------+ 
@@ -142,6 +140,8 @@ In this document, a domain refers to a routing domain under a single administrat
 ~~~
 {: #intra-domain  title="Deployment locations of intra-domain SAV"}
 
+This document analyzes the gaps in current operational mechanisms for intra-domain SAV. It also identifies the properties that new intra-domain SAV mechanisms are expected to provide.
+
 ## Terminology
 
 Non-BGP Customer Network: A stub network (i.e., a network that only originates traffic) connected to its provider network for Internet connectivity and does not participate in eBGP peering with its provider network.
@@ -160,13 +160,15 @@ Proper Permit: The validation results that packets with legitimate source addres
 
 SAV-specific Information: The information specialized for SAV rule generation.
 
+Direct Server Return (DSR): A traffic delivery model commonly used by Content Delivery Networks (CDNs) that use anycast service addresses while delivering data from edge locations that do not announce those addresses. In such deployments, a request is received by the anycast server or location, but the response is sent directly by another server (i.e., the edge location) with the anycast service address as the source address, rather than the address used to reach the edge server. This can create a legitimate hidden-prefix scenario.
+
 ## Requirements Language
 
 {::boilerplate bcp14-tagged}
 
 The requirements language is used in {{sec-requirement}} and applies to implementations of SAV conformant to the listed requirements.
 
-# Problem Statement of Current Operational Intra-domain SAV Mechanisms {#sec-mechanisms}
+# Issues with Current Operational Intra-domain SAV Mechanisms {#sec-mechanisms}
 
 Although BCP 38 [RFC2827] and BCP 84 [RFC3704] specify several ingress filtering methods primarily intended for inter-domain SAV, some of these methods have also been applied to intra-domain SAV in operational practice. This section summarizes the problems of mechanisms currently used to implement intra-domain SAV. These mechanisms have significant limitations in terms of automated updates or accurate validation.
 
@@ -184,15 +186,15 @@ This section analyzes the gaps and key challenges of the current operational int
 
 ACL-based SAV can be deployed on interfaces facing a non-BGP customer network or a set of hosts, permitting only packets with authorized source addresses. Such mechanism can also be applied on interfaces facing a non-BGP ISP network to block packets with prohibited source addresses, including internal-use-only addresses, unallocated addresses, and addresses single-homed to the local domain (e.g., P1 and P2 in {{intra-domain}}). A key limitation of ACL-based SAV is the need to maintain consistency between SAV state and ACL rules. Operators need to update ACL rules to reflect changes in prefixes or topology, and delays or inconsistencies in this process may result in outdated rules that inadvertently block legitimate traffic or permit spoofed traffic.
 
-As noted in Section 2.4 of [RFC3704], loose uRPF sacrifices directionality, so its effectiveness in mitigating source address spoofing is very limited, and improper permit problems may occur. 
+Loose uRPF sacrifices directionality, so its effectiveness in mitigating source address spoofing is very limited, and improper permit problems may occur. With strict uRPF, it may drop legitimate packets in scenarios such as asymmetric routing or hidden prefixes. 
 
-With strict uRPF, it may drop legitimate packets in scenarios such as asymmetric routing or hidden prefixes. The following subsections describe two specific gap scenarios that arise when using strict uRPF for intra-domain SAV.
+The following subsections describe two specific gap scenarios for intra-domain SAV.
 
 ## Asymmetric Routing Scenario {#subsec-ar}
 
 Asymmetric routing means a packet traverses from a source to a destination in one path and takes a different path when it returns to the source. Asymmetric routing can occur within an AS due to routing policy, traffic engineering, etc. 
 
-For example, a non-BGP customer network connected to multiple routers of the AS may need to perform load balancing on incoming traffic, thereby resulting in asymmetric routing. {{multi-home}} illustrates an example of asymmetric routing. The non-BGP customer network owns prefix 2001:db8::/55 [RFC6890] and connects to two routers of the AS, Router 1 and Router 2. Router 1, Router 2, and Router 3 exchange routing information via the intra-domain routing protocol. To achieve load balancing for inbound traffic, the non-BGP customer network expects traffic destined for 2001:db8:0::/56 to enter through Router 1, and traffic destined for 2001:db8:0:100::/56 to enter through Router 2. To this end, Router 1 advertises 2001:db8:0::/56 and Router 2 advertises 2001:db8:0:100::/56 through the intra-domain routing protocol. {{multi-home}} also shows the corresponding FIB entries of Router 1 and Router 2 for the two prefixes.
+For example, a non-BGP customer network connected to multiple routers of the AS may need to perform load balancing on incoming traffic, thereby resulting in asymmetric routing. {{multi-home}} illustrates an example of asymmetric routing. The non-BGP customer network owns prefix 2001:db8::/55 and connects to two routers of the AS, Router 1 and Router 2. Router 1, Router 2, and Router 3 exchange routing information via the intra-domain routing protocol. To achieve load balancing for inbound traffic, the non-BGP customer network expects traffic destined for 2001:db8:0::/56 to enter through Router 1, and traffic destined for 2001:db8:0:100::/56 to enter through Router 2. To this end, Router 1 advertises 2001:db8:0::/56 and Router 2 advertises 2001:db8:0:100::/56 through the intra-domain routing protocol. {{multi-home}} also shows the corresponding FIB entries of Router 1 and Router 2 for the two prefixes.
 
 ~~~
  +----------------------------------------------------------+
@@ -235,6 +237,8 @@ Although the non-BGP customer network does not expect to receive inbound traffic
 
 If Router 1 enforces strict uRPF by checking the FIB entry for the prefix 2001:db8:0:100::/56, the corresponding SAV rule would only allow packets with a source address from 2001:db8:0:100::/56 that arrive via Router 3. Consequently, when the non-BGP customer network sends packets with a source address in 2001:db8:0:100::/56 to Router 1, strict uRPF would incorrectly drop these legitimate packets. Similarly, if Router 2 enforces strict uRPF, it would incorrectly block legitimate packets from the non-BGP customer network that use source addresses within the prefix 2001:db8:0::/56.
 
+If Router 1 and Router 2 enforce loose uRPF, they would not improperly block legitimate packets from the non-BGP customer, but would improperly permit spoofed packets using source addresses covered in their FIBs, as discussed in {{sec-mechanisms}}.
+
 ## Hidden Prefix Scenario {#subsec-hp}
 
 The intra-domain hidden prefix scenario refers to situations in which a host or non-BGP customer legitimately originates traffic using source addresses that are not visible to the intra-domain routing protocol within the domain.
@@ -243,9 +247,7 @@ The intra-domain hidden prefix scenario refers to situations in which a host or 
 
 - A non-BGP customer network may originate traffic using source addresses that are not advertised to the domain operator. This can occur in scenarios such as Direct Server Return (DSR) deployments or when the customer network uses address space assigned by another provider (e.g., in multi-homing or hybrid connectivity scenarios), and such prefixes are not propagated within the operator’s intra-domain routing system.
 
-For ACL-based SAV, enforcing correct filtering in these scenarios requires authoritative information that explicitly specifies which source addresses the host or non-BGP customer is authorized to use. In practice, such authoritative information is often missing.
-
-Existing uRPF-based mechanisms (strict uRPF or loose uRPF) also fail in hidden prefix scenarios. They will drop packets from hidden prefixes because the source addresses are absent from the router's FIB or are received from unexpected interfaces.
+For ACL-based SAV, enforcing correct filtering in these scenarios requires authoritative information that explicitly specifies which source addresses the host or non-BGP customer is authorized to use. In practice, such authoritative information is often missing. Strict uRPF and Loose uRPF also fail in hidden prefix scenarios. They will drop packets from hidden prefixes because the source addresses are absent from the router's FIB or are received from unexpected interfaces.
 
 # Requirements for New SAV Mechanisms {#sec-requirement}
 
