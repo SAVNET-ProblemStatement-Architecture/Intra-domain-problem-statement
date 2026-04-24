@@ -282,9 +282,6 @@ If any new intra-domain SAV mechanism requires disseminating SAV-specific inform
 
 Any new intra-domain SAV mechanism MUST use information that is authenticated or trusted, either through verification of its integrity and authenticity, or via an established trust relationship with the information source. If a SAV mechanism introduces new SAV-specific information, such information MUST be authenticated to ensure its integrity and authenticity before being used for SAV decision making.
 
-## Vulnerability Prevention
-
-Any new intra-domain SAV mechanism MUST NOT introduce additional security vulnerabilities to existing intra-domain architectures or protocols. Protection against compromised or malicious intra-domain routers is out of scope, as such routers can compromise not only SAV mechanisms but also the entire intra-domain routing domain.
 
 # Security Considerations {#sec-security} 
 
