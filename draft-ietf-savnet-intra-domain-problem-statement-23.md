@@ -257,16 +257,13 @@ Existing intra-domain SAV mechanisms have important limitations. Current uRPF-ba
 
 ## Accurate Validation {#sub-require1}
 
-Any new intra-domain SAV mechanism MUST improve the accuracy of source address validation compared to existing uRPF-based mechanisms. In particular, it MUST reduce the occurrence of improper blocks (i.e., blocking legitimate traffic), improper permits (i.e., allowing spoofed traffic), or both. Specifically, it MUST satisfy the following conditions:
-
-- result in fewer improper blocks than strict uRPF, particularly in scenarios involving asymmetric routes or hidden prefixes;
-- result in fewer improper permits than loose uRPF.
+Any new intra-domain SAV mechanism MUST improve the accuracy of SAV over existing mechanisms. In particular, it MUST reduce, and seek to avoid, improper blocks in scenarios involving asymmetric routes or hidden prefixes ({{sec-gap}}). It MUST further reduce improper permits compared to existing mechanisms.
 
 To achieve higher SAV accuracy, additional information beyond the local FIB (e.g., SAV-specific information) may be needed to make validation decisions. By integrating such information, routers may have the ability to account for asymmetric routes and hidden prefixes, resulting in more accurate SAV rules.
 
 ## Automatic Updates
 
-Any new intra-domain SAV mechanism MUST be capable of automatically collecting and processing relevant information, and using it to derive and update SAV state and corresponding filtering rules on routers. Automation helps reduce operational complexity and maintenance overhead, while allowing some initial configuration to improve SAV accuracy. This ensures the mechanism is deployable in practical networks without introducing excessive management burden.
+Any new intra-domain SAV mechanism MUST be capable of automatically collecting and processing relevant information, and updating the corresponding SAV rules in response to relevant information changes. Automation helps reduce operational complexity and maintenance overhead, while allowing some initial configuration to improve SAV accuracy. This ensures the mechanism is deployable in practical networks without introducing excessive management burden.
 
 ## Incremental Deployment Support
 
