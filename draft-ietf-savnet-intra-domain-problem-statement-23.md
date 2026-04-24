@@ -269,9 +269,9 @@ Any new intra-domain SAV mechanism MUST be capable of automatically collecting a
 
 Any new intra-domain SAV mechanism MUST support incremental deployment and provide measurable benefits even when only a subset of external non-BGP interfaces deploy the mechanism.
 
-## Fast Convergence
+## Compatibility with Fast-Reroute Mechanisms
 
-If any new intra-domain SAV mechanism requires disseminating SAV-specific information among intra-domain routers via a protocol, two considerations are essential. First, such mechanism MUST allow routers to learn updated SAV-specific information in a timely manner. Second, such mechanism MUST NOT transmit excessive SAV-specific information via a protocol, as this could significantly increase the burden on the routers’ control planes and potentially degrade the performance of existing protocols.
+Any new intra-domain SAV mechanism MUST operate correctly in networks where Loop-Free Alternates (LFA) or other fast-reroute mechanisms are deployed and operational, and MUST coexist with such mechanisms. If any new intra-domain SAV mechanism requires disseminating SAV-specific information among intra-domain routers via a protocol, it MUST NOT adversely affect the convergence of existing routing protocols or the operation of these fast-reroute mechanisms.
 
 ## Authentication of Information Used for SAV
 
