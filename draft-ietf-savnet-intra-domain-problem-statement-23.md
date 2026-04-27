@@ -163,6 +163,9 @@ Proper Permit:
 SAV-specific Information: 
 : The information specialized for SAV rule generation.
 
+Direct Server Return (DSR): 
+: A traffic delivery model commonly used by Content Delivery Networks (CDNs) that use anycast service addresses while delivering data from edge locations that do not announce those addresses. In such deployments, a request is received by the anycast server or location, but the response is sent directly by another server (i.e., the edge location) with the anycast service address as the source address, rather than the address used to reach the edge server. This can create a legitimate hidden-prefix scenario.
+
 ## Requirements Language
 
 {::boilerplate bcp14-tagged}
