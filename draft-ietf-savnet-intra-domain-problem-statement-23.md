@@ -260,9 +260,7 @@ The intra-domain hidden prefix scenario refers to situations in which a host or 
 
 - A customer network with no AS may originate traffic using source addresses that are not advertised to the AS operator. This can occur in scenarios such as Direct Server Return (DSR) deployments or when the customer network uses address space assigned by another provider (e.g., in multi-homing or hybrid connectivity scenarios), and such prefixes are not propagated within the operator’s intra-domain routing system.
 
-For ACL-based SAV, enforcing correct filtering in these scenarios requires authoritative information that explicitly specifies which source addresses the host or customer is authorized to use. In practice, such authoritative information is often missing.
-
-Existing uRPF-based mechanisms (strict uRPF or loose uRPF) also fail in hidden prefix scenarios. They will drop packets from hidden prefixes because the source addresses are absent from the router's FIB or are received from unexpected interfaces.
+For ACL-based SAV, enforcing correct filtering in these scenarios requires authoritative information that explicitly specifies which source addresses the host or the customer network is authorized to use. In practice, such authoritative information is often missing. Strict uRPF and loose uRPF also fail in hidden prefix scenarios. They will drop packets from hidden prefixes because the source addresses are absent from the router's FIB or are received from unexpected interfaces.
 
 # Requirements for New SAV Mechanisms {#sec-requirement}
 
@@ -272,9 +270,9 @@ Existing intra-domain SAV mechanisms have problems in terms of validation accura
 
 ## Accurate Validation {#sub-require1}
 
-Any new intra-domain SAV mechanism MUST improve the accuracy of source address validation compared to existing uRPF-based mechanisms. In particular, it MUST reduce the occurrence of improper blocks (i.e., blocking legitimate traffic), improper permits (i.e., allowing spoofed traffic), or both. Specifically, it MUST satisfy the following conditions:
+Any new intra-domain SAV mechanism MUST improve the accuracy of SAV over existing intra-domain SAV mechanisms. In particular, it MUST reduce the occurrence of improper blocks (i.e., blocking legitimate traffic), improper permits (i.e., allowing spoofed traffic), or both. Specifically, it MUST satisfy the following conditions:
 
-- result in fewer improper blocks than strict uRPF, particularly in scenarios involving asymmetric routes or hidden prefixes;
+- result in fewer improper blocks than strict uRPF, particularly in scenarios involving asymmetric routes or hidden prefixes ({{sec-gap}});
 - result in fewer improper permits than loose uRPF.
 
 To achieve higher SAV accuracy, additional information beyond the local FIB (e.g., SAV-specific information) may be needed to make validation decisions. By integrating such information, routers may have the ability to account for asymmetric routes and hidden prefixes, resulting in more accurate SAV rules.
@@ -293,7 +291,7 @@ If any new intra-domain SAV mechanism requires disseminating SAV-specific inform
 
 ## Authentication of Information Used for SAV
 
-Any new intra-domain SAV mechanism MUST use information that is authenticated or trusted, either through verification of its integrity and authenticity, or via an established trust relationship with the information source. If a SAV mechanism introduces new SAV-specific information, such information MUST be authenticated to ensure its integrity and authenticity before being used for SAV decision making.
+Any new intra-domain SAV mechanism MUST use information that is authenticated or trusted, either through verification of its integrity and authenticity, or via an established trust relationship with the information source.
 
 # Security Considerations {#sec-security} 
 
