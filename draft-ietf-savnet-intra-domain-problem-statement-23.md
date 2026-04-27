@@ -275,7 +275,7 @@ To achieve higher SAV accuracy, additional information beyond the local FIB (e.g
 
 ## Automatic Updates
 
-Any new intra-domain SAV mechanism MUST be capable of automatically collecting and processing relevant information, and using it to derive and update SAV state and corresponding filtering rules on routers. Automation helps reduce operational complexity and maintenance overhead, while allowing some initial configuration to improve SAV accuracy. This ensures the mechanism is deployable in practical networks without introducing excessive management burden.
+Any new intra-domain SAV mechanism MUST be capable of automatically collecting and processing relevant information, and updating the corresponding SAV rules in response to relevant information changes. Automation helps reduce operational complexity and maintenance overhead, while allowing some initial configuration to improve SAV accuracy. This ensures the mechanism is deployable in practical networks without introducing excessive management burden.
 
 ## Incremental Deployment Support
 
