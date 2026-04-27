@@ -54,7 +54,6 @@ normative:
   RFC2827:
   RFC3704:
   RFC5210:
-  RFC8704:
   RFC7513:
 informative:
   cable-verify:
@@ -188,13 +187,11 @@ Although BCP 38 [RFC2827] and BCP 84 [RFC3704] specify several ingress filtering
 
 - Loose uRPF [RFC3704] also relies on the local FIB for validation, but only checks for the presence of a covering prefix. A packet is accepted if the FIB contains a prefix that covers the source address, regardless of the incoming interface.
 
-- Enhanced Feasible Path uRPF (EFP-uRPF) [RFC8704] is an advanced SAV mechanism specifically designed for inter-domain SAV. It enforces SAV on eBGP interfaces facing a customer AS by leveraging BGP data received from external ASes. EFP-uRPF is not analyzed in this document, as it is outside the scope of intra-domain SAV.
-
 # Gap Analysis {#sec-gap}
 
 This section analyzes the gaps of the current operational intra-domain SAV mechanisms.
 
-ACL-based SAV can be deployed on interfaces facing a non-BGP customer network or a set of hosts, permitting only packets with authorized source addresses. Such mechanism can also be applied on interfaces facing a non-BGP ISP network to block packets with prohibited source addresses, including internal-use-only addresses, unallocated addresses, and addresses single-homed to the local domain (e.g., P1 and P2 in {{intra-domain}}). A key limitation of ACL-based SAV is the need to maintain consistency between SAV state and ACL rules. Operators need to update ACL rules to reflect changes in prefixes or topology, and delays or inconsistencies in this process may result in outdated rules that inadvertently block legitimate traffic or permit spoofed traffic.
+ACLs can be used on interfaces facing a customer network with no AS or a set of hosts to permit only packets whose source addresses belong to specific prefixes. To ensure correct filtering behavior, the ACLs used for SAV filtering need to be updated when the permitted prefixes change; otherwise, packets may be improperly permitted or blocked. In ACL-based SAV deployments, keeping these ACLs up to date can introduce operational challenges when operators need to detect prefix changes and determine and apply the corresponding ACL updates.
 
 As described in {{sec-mechanisms}} and also noted in [RFC3704], loose uRPF sacrifices directionality when validating source addresses of data packets. Since its rules are overly permissive, any spoofed packet with a source address present in the FIB may be permitted by loose uRPF (i.e., an improper permit problem). 
 
@@ -263,11 +260,9 @@ Existing uRPF-based mechanisms (strict uRPF or loose uRPF) also fail in hidden p
 
 # Requirements for New SAV Mechanisms {#sec-requirement}
 
-The limitations described above primarily stem from the lack of SAV-specific authoritative information that can be consistently and automatically consumed by SAV mechanisms. Existing automated uRPF-based approaches derive SAV decisions from routing or forwarding state, which is intended to express reachability rather than authorization of source address usage. As a result, these mechanisms may not provide reliable validation in scenarios such as asymmetric routing or hidden prefixes. In contrast, ACL-based approaches can express source address authorization more precisely, but rely on ongoing operational intervention, which limits their applicability in dynamic operational environments.
+This section identifies five requirements that can inform the design of new intra-domain SAV mechanisms. These requirements describe the properties that new mechanisms are expected to provide in order to improve upon existing mechanisms, but do not make assumptions about how those properties are achieved. They do not mandate or justify any specific extension to routing or other protocols and therefore cannot be used to directly initiate standards-track protocol changes.
 
-uRPF-based mechanisms rely on routing information to make SAV decisions, assuming that the routing information in the local FIB is correct. If the routing information is incorrect, SAV decisions may also be incorrect, potentially resulting in improper blocking or permitting. Ensuring the correctness of routing information is the responsibility of mechanisms or operational processes outside the scope of SAV. However, when SAV relies on routing information or other contextual information, such information is expected to be derived from trusted sources before being used.
-
-This section identifies five requirements to guide the design, development, and evaluation of new intra-domain SAV mechanisms, and to provide a common basis for improving upon existing approaches. These requirements are informational in nature. To avoid misinterpretation or misuse as a normative reference, it is noted that these informational requirements cannot be used to initiate standards-track protocol changes.
+Existing intra-domain SAV mechanisms have problems in terms of validation accuracy and operational overhead. Current uRPF-based mechanisms derive SAV decisions from routing or forwarding state, which is intended to express reachability rather than authorization of source address usage. More generally, current mechanisms lack authoritative information specifically intended for source address validation that can be consistently and automatically consumed by SAV mechanisms. As a result, uRPF-based mechanisms may not provide accurate validation in scenarios such as asymmetric routing or hidden prefixes ({{sec-gap}}). Existing ACL-based SAV deployments may have limited applicability in dynamic environments when they rely on operator-driven ACL maintenance. These problems motivate the first two requirements below (in {{sub-require1}} and {{sub-require2}}). The remaining three requirements (in {{sub-require3}}, {{sub-require4}}, and {{sub-require5}}) are motivated by deployment and operational considerations.
 
 ## Accurate Validation {#sub-require1}
 
