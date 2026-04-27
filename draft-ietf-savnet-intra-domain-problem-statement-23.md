@@ -103,22 +103,22 @@ Some access networks have already deployed SAV mechanisms. These mechanisms typi
 
 * Cable Source-Verify [cable-verify] 
 
-However, access-network SAV mechanisms are not universally deployed [CAIDA-spoofer]. Therefore, intra-domain (i.e., intra-AS) SAV and inter-domain (i.e., inter-AS) SAV are required [RFC5210].
+However, access-network SAV mechanisms are not universally deployed [CAIDA-spoofer]. Therefore, intra-domain (i.e., intra-AS) SAV and inter-domain (i.e., inter-AS) SAV are required [RFC5210]. For the purposes of this document, intra-domain SAV and inter-domain SAV are defined as follows:
 
-This document provides a gap analysis of the current operational intra-domain SAV mechanisms and identifies requirements for new intra-domain SAV solutions.
+* Intra-domain SAV: The AS validates the source addresses of data traffic it originates directly or indirectly (e.g., from a customer network with no AS). As illustrated in {{intra-domain}}, intra-domain SAV is applied to traffic originating on external router interfaces on which (a) a single host or a set of hosts are connected, or (b) a customer network with no AS that manages one or more IP prefixes is connected. The goal of intra-domain SAV on such interfaces is to block data traffic using source addresses that are not authorized for use by the entity connected to the interface. SAV on internal router interfaces (e.g., interfaces between Router 1 and Router 3 in {{intra-domain}}) is outside the scope.
 
-In this document, a domain refers to a routing domain under a single administrative control (e.g., an AS). Intra-domain SAV refers to SAV at a domain's external interfaces that do not carry external BGP (eBGP) sessions (i.e., non-BGP external interfaces). SAV at internal interfaces or BGP-facing external interfaces is considered out of scope. For a domain, as illustrated in {{intra-domain}}, a non-BGP external interface may connect to a set of hosts, a non-BGP customer network, or a non-BGP Internet Service Provider (ISP) network. The goal of intra-domain SAV at such interfaces is to prevent traffic using unauthorized source addresses from entering the domain.
+* Inter-domain SAV: The AS validates the source addresses of data traffic received from a neighboring AS, whether that traffic originated within the neighbor's network or is being transited through it. Inter-domain SAV is applied to incoming traffic on external router interfaces directly connected to a neighboring AS. This includes cases where the neighboring AS uses either a public ASN or a private ASN. 
 
 ~~~
-      +-----------------+         +---------------+ 
-      |   Non-BGP ISP   |         | eBGP Neighbor |
-      +-----------------+         +---------------+ 
-              |                           |           
-              |                           |           
-              |                           |
-+-------------|---------------------------|---------+ 
-|Domain       \/                          |         | 
-|         +---#------+               +----------+   | 
+    +--------------------+        
+    |  A neighboring AS  |         
+    +--------------------+          
+              |                                      
+              |                                     
+              |                           
++-------------|-------------------------------------+ 
+|Domain       |                                     | 
+|         +----------+               +----------+   | 
 |         | Router 3 +---------------+ Router 4 |   | 
 |         +----------+               +----------+   | 
 |          /        \                     |         | 
@@ -131,33 +131,37 @@ In this document, a domain refers to a routing domain under a single administrat
 |         \           /                   |         | 
 +----------\---------/--------------------|---------+ 
        +----------------+         +---------------+  
-       |Non-BGP Customer|         |   A Set of    |  
-       |   Network      |         |     Hosts     |  
-       |     (P1)       |         |     (P2)      |  
+       | A customer     |         | A single host |  
+       | network with   |         | or a set of   |  
+       | no AS          |         | hosts         |  
        +----------------+         +---------------+ 
                                                     
-  This document focuses on SAV at a domain's non-BGP 
-  external interfaces including Interfaces  'X', '*', and '#'.
+Intra-domain SAV is applied on Interfaces '*' and 'X'.
 ~~~
 {: #intra-domain  title="Deployment locations of intra-domain SAV"}
 
+This document analyzes the gaps in current operational mechanisms for intra-domain SAV. It also identifies the properties that new intra-domain SAV mechanisms are expected to provide.
+
 ## Terminology
 
-Non-BGP Customer Network: A stub network (i.e., a network that only originates traffic) connected to its provider network for Internet connectivity and does not participate in eBGP peering with its provider network.
+{:vspace}
+SAV Rule:  
+: The rule in a router that describes the mapping relationship between a source address (prefix) and the valid incoming interface(s). It is used by a router to make SAV decisions.
 
-Non-BGP Internet Service Provider (ISP) Network: A network that forwards traffic from its customer network to the Internet and does not participate in eBGP peering with its customer network.
+Improper Block:  
+: The validation results that the packets with legitimate source addresses are blocked improperly due to inaccurate SAV rules.
 
-SAV Rule: The rule in a router that describes the mapping relationship between a source address (prefix) and the valid incoming interface(s). It is used by a router to make SAV decisions.
+Improper Permit:  
+: The validation results that the packets with spoofed source addresses are permitted improperly due to inaccurate SAV rules.
 
-Improper Block: The validation results that the packets with legitimate source addresses are blocked improperly due to inaccurate SAV rules.
+Proper Block:  
+: The validation results that packets with spoofed source addresses are blocked by SAV rules.
 
-Improper Permit: The validation results that the packets with spoofed source addresses are permitted improperly due to inaccurate SAV rules.
+Proper Permit:  
+: The validation results that packets with legitimate source addresses are permitted by SAV rules.
 
-Proper Block: The validation results that packets with spoofed source addresses are blocked by SAV rules.
-
-Proper Permit: The validation results that packets with legitimate source addresses are permitted by SAV rules.
-
-SAV-specific Information: The information specialized for SAV rule generation.
+SAV-specific Information: 
+: The information specialized for SAV rule generation.
 
 ## Requirements Language
 
@@ -203,7 +207,7 @@ The following subsections describe two specific gap scenarios for intra-domain S
 
 Asymmetric routing means a packet traverses from a source to a destination in one path and takes a different path when it returns to the source. Asymmetric routing can occur within an AS due to routing policy, traffic engineering, etc. 
 
-For example, a non-BGP customer network connected to multiple routers of the AS may need to perform load balancing on incoming traffic, thereby resulting in asymmetric routing. {{multi-home}} illustrates an example of asymmetric routing. The non-BGP customer network owns prefix 2001:db8::/55 and connects to two routers of the AS, Router 1 and Router 2. Router 1, Router 2, and Router 3 exchange routing information via the intra-domain routing protocol. To achieve load balancing for inbound traffic, the non-BGP customer network expects traffic destined for 2001:db8:0::/56 to enter through Router 1, and traffic destined for 2001:db8:0:100::/56 to enter through Router 2. To this end, Router 1 advertises 2001:db8:0::/56 and Router 2 advertises 2001:db8:0:100::/56 through the intra-domain routing protocol. {{multi-home}} also shows the corresponding FIB entries of Router 1 and Router 2 for the two prefixes.
+For example, a customer network with no AS connected to multiple routers of the AS may need to perform load balancing on incoming traffic, thereby resulting in asymmetric routing. {{multi-home}} illustrates an example of asymmetric routing. The customer network owns prefix 2001:db8::/55 and connects to two routers of the AS, Router 1 and Router 2. Router 1, Router 2, and Router 3 exchange routing information via the intra-domain routing protocol. To achieve load balancing for inbound traffic, the customer network expects traffic destined for 2001:db8:0::/56 to enter through Router 1, and traffic destined for 2001:db8:0:100::/56 to enter through Router 2. To this end, Router 1 advertises 2001:db8:0::/56 and Router 2 advertises 2001:db8:0:100::/56 through the intra-domain routing protocol. {{multi-home}} also shows the corresponding FIB entries of Router 1 and Router 2 for the two prefixes.
 
 ~~~
  +----------------------------------------------------------+
@@ -224,37 +228,36 @@ For example, a non-BGP customer network connected to multiple routers of the AS 
   source IP addresses   \        /  destination IP addresses
   of 2001:db8:0:100::/56 \      \/  of 2001:db8:0:100::/56  
                     +----------------+                     
-                    |Non-BGP Customer|                     
-                    |    Network     |                     
+                    |Customer network|                     
+                    |with no AS      |                     
                     |(2001:db8::/55) |                     
                     +----------------+                     
 
  FIB of Router 1                FIB of Router 2
  Dest                Next_hop   Dest                Next_hop
- 2001:db8:0::/56     Non-BGP    2001:db8:0:100::/56 Non-BGP
-                     Customer                       Customer
-                     Nestwork                       Network
+ 2001:db8:0::/56     Customer   2001:db8:0:100::/56 Customer
+                     Network                        Network
  2001:db8:0:100::/56 Router 3   2001:db8:0::/56     Router 3
 
- The legitimate traffic originated from non-BGP customer network 
+ The legitimate traffic originated from the customer network 
  with source addresses in 2001:db8:0:100::/56 will be improperly 
  blocked by strict uRPF on Router 1.
 ~~~
 {: #multi-home title="An example of asymmetric routing"}
 
-Although the non-BGP customer network does not expect to receive inbound traffic for 2001:db8:0:100::/56 via Router 1, it can send outbound traffic with source addresses in that prefix through Router 1. As a result, data packets between the non-BGP customer network and Router 1 may follow asymmetric paths. Arrows in the figure indicate the direction of traffic flow.
+Although the customer network does not expect to receive inbound traffic for 2001:db8:0:100::/56 via Router 1, it can send outbound traffic with source addresses in that prefix through Router 1. As a result, data packets between the customer network and Router 1 may follow asymmetric paths. Arrows in the figure indicate the direction of traffic flow.
 
-If Router 1 enforces strict uRPF by checking the FIB entry for the prefix 2001:db8:0:100::/56, the corresponding SAV rule would only allow packets with a source address from 2001:db8:0:100::/56 that arrive via Router 3. Consequently, when the non-BGP customer network sends packets with a source address in 2001:db8:0:100::/56 to Router 1, strict uRPF would incorrectly drop these legitimate packets. Similarly, if Router 2 enforces strict uRPF, it would incorrectly block legitimate packets from the non-BGP customer network that use source addresses within the prefix 2001:db8:0::/56.
+If Router 1 enforces strict uRPF by checking the FIB entry for the prefix 2001:db8:0:100::/56, the corresponding SAV rule would only allow packets with a source address from 2001:db8:0:100::/56 that arrive via Router 3. Consequently, when the customer network sends packets with a source address in 2001:db8:0:100::/56 to Router 1, strict uRPF would incorrectly drop these legitimate packets. Similarly, if Router 2 enforces strict uRPF, it would incorrectly block legitimate packets from the customer network that use source addresses within the prefix 2001:db8:0::/56.
 
 ## Hidden Prefix Scenario {#subsec-hp}
 
-The intra-domain hidden prefix scenario refers to situations in which a host or non-BGP customer legitimately originates traffic using source addresses that are not visible to the intra-domain routing protocol within the domain.
+The intra-domain hidden prefix scenario refers to situations in which a host or a customer network with no AS legitimately originates traffic using source addresses that are not visible to the intra-domain routing protocol within the domain.
 
 - A host (for example, a cloud server instance operated by a tenant) may originate traffic using a source address not allocated by the AS operator. This can occur in deployments such as Direct Server Return (DSR), where return traffic is sent directly from the server using a service IP address that is not part of the operator’s internal routing view.
 
-- A non-BGP customer network may originate traffic using source addresses that are not advertised to the domain operator. This can occur in scenarios such as Direct Server Return (DSR) deployments or when the customer network uses address space assigned by another provider (e.g., in multi-homing or hybrid connectivity scenarios), and such prefixes are not propagated within the operator’s intra-domain routing system.
+- A customer network with no AS may originate traffic using source addresses that are not advertised to the AS operator. This can occur in scenarios such as Direct Server Return (DSR) deployments or when the customer network uses address space assigned by another provider (e.g., in multi-homing or hybrid connectivity scenarios), and such prefixes are not propagated within the operator’s intra-domain routing system.
 
-For ACL-based SAV, enforcing correct filtering in these scenarios requires authoritative information that explicitly specifies which source addresses the host or non-BGP customer is authorized to use. In practice, such authoritative information is often missing.
+For ACL-based SAV, enforcing correct filtering in these scenarios requires authoritative information that explicitly specifies which source addresses the host or customer is authorized to use. In practice, such authoritative information is often missing.
 
 Existing uRPF-based mechanisms (strict uRPF or loose uRPF) also fail in hidden prefix scenarios. They will drop packets from hidden prefixes because the source addresses are absent from the router's FIB or are received from unexpected interfaces.
 
@@ -279,7 +282,7 @@ Any new intra-domain SAV mechanism MUST be capable of automatically collecting a
 
 ## Incremental Deployment Support
 
-Any new intra-domain SAV mechanism MUST support incremental deployment and provide measurable benefits even when only a subset of external non-BGP interfaces deploy the mechanism.
+Any new intra-domain SAV mechanism MUST support incremental deployment and provide measurable benefits even when deployed on only a subset of external interfaces facing hosts or customer networks with no AS.
 
 ## No Adverse Impact on Routing Convergence and Fast Reroute {#sub-require4}
 
